@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宠物信息管理系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>宠物信息管理系统</h1>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('pet_info.index') }}">宠物信息</a></li>
+                <li><a href="{{ url_for('pet_knowledge.index') }}">宠物知识</a></li>
+                <li><a href="{{ url_for('pet_hospital.index') }}">宠物医院</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <main>
+        <section class="welcome">
+            <h2>欢迎使用宠物信息管理系统</h2>
+            <p>这个系统可以帮助您管理宠物信息、获取宠物知识以及查找附近的宠物医院。</p>
+        </section>
+    </main>
+    
+    <footer>
+        <p>&copy; 2023 宠物信息管理系统</p>
+    </footer>
+</body>
+</html> 

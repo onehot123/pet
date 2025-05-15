@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宠物医院 - 宠物信息管理系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- 百度地图API，请替换"您的密钥"为您在百度地图开发者平台申请的密钥 -->
+    <!-- 获取密钥步骤：
+        1. 访问 https://lbsyun.baidu.com/
+        2. 注册/登录账号
+        3. 创建应用，获取AK (API密钥)
+        4. 替换下面链接中的"您的密钥"部分
+    -->
+    <script type="text/javascript" src="https://api.map.baidu.com/api?v=3.0&ak=您的密钥"></script>
+    <style>
+        #mapContainer {
+            width: 100%;
+            height: 500px;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+        .search-box {
+            margin-bottom: 20px;
+        }
+        .search-box input {
+            width: 70%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .search-box button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .search-box button:hover {
+            background-color: #0056b3;
+        }
+        .hospital-list {
+            margin-top: 20px;
+        }
+        .hospital-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .hospital-item:hover {
+            background-color: #f5f5f5;
+        }
+        .api-notice {
+            background-color: #ffe8e8;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #f44336;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>宠物信息管理系统</h1>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('pet_info.index') }}">宠物信息</a></li>
+                <li><a href="{{ url_for('pet_knowledge.index') }}">宠物知识</a></li>
+                <li><a href="{{ url_for('pet_hospital.index') }}" class="active">宠物医院</a></li>
+                <li><a href="{{ url_for('index') }}">返回首页</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <main>
+        <section>
+            <h2>宠物医院信息</h2>
+            
+            <div class="api-notice">
+                <p><strong>注意:</strong> 使用此功能需要配置百度地图API密钥。请按照以下步骤操作：</p>
+                <ol>
+                    <li>访问<a href="https://lbsyun.baidu.com/" target="_blank">百度地图开发者平台</a></li>
+                    <li>注册/登录账号</li>
+                    <li>创建应用，获取AK (API密钥)</li>
+                    <li>修改本页面代码，将"您的密钥"替换为获取到的AK</li>
+                </ol>
+            </div>
+            
+            <p>在下方搜索框输入城市和地区，查找附近的宠物医院</p>
+            
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="输入城市和地区，例如：北京市海淀区">
+                <button id="searchBtn">搜索</button>
+            </div>
+            
+            <!-- 地图容器 -->
+            <div id="mapContainer"></div>
+            
+            <!-- 医院列表 -->
+            <div class="hospital-list" id="hospitalList"></div>
+        </section>
+    </main>
+    
+    <footer>
+        <p>&copy; 2023 宠物信息管理系统</p>
+    </footer>
+    
+    <script>
+        // 检查是否配置了API密钥
+        function checkApiKey() {
+            var scriptSrc = document.querySelector('script[src*="api.map.baidu.com"]').src;
+            return !scriptSrc.includes('您的密钥');
+        }
+        
+        // 仅在配置了密钥时初始化地图
+        if (checkApiKey()) {
+            initMap();
+        } else {
+            document.getElementById('mapContainer').innerHTML = '<div style="text-align:center; padding:30px; color:#f44336;"><h3>请先配置百度地图API密钥</h3><p>请按照页面上方的说明进行操作</p></div>';
+        }
+        
+        function initMap() {
+            // 初始化地图
+            var map = new BMap.Map("mapContainer");
+            
+            // 创建中心点坐标 (默认北京)
+            var point = new BMap.Point(116.404, 39.915);
+            
+            // 初始化地图，设置中心点坐标和地图级别
+            map.centerAndZoom(point, 12);
+            
+            // 添加地图控件
+            map.addControl(new BMap.NavigationControl());    // 添加平移缩放控件
+            map.addControl(new BMap.ScaleControl());         // 添加比例尺控件
+            map.addControl(new BMap.OverviewMapControl());   // 添加缩略地图控件
+            map.enableScrollWheelZoom();                     // 启用滚轮放大缩小
+            
+            // 定位当前位置
+            var geolocation = new BMap.Geolocation();
+            geolocation.getCurrentPosition(function(r) {
+                if (this.getStatus() == BMAP_STATUS_SUCCESS) {
+                    var mk = new BMap.Marker(r.point);
+                    map.addOverlay(mk);
+                    map.panTo(r.point);
+                    // 以当前位置为中心搜索宠物医院
+                    searchNearby(r.point);
+                } else {
+                    alert('定位失败，请手动搜索');
+                }
+            });
+            
+            // 搜索按钮点击事件
+            document.getElementById("searchBtn").addEventListener("click", function() {
+                var searchText = document.getElementById("searchInput").value;
+                if (searchText.trim() === "") {
+                    alert("请输入搜索地址");
+                    return;
+                }
+                
+                // 创建地址解析器实例
+                var myGeo = new BMap.Geocoder();
+                // 将地址解析结果显示在地图上，并调整地图视野
+                myGeo.getPoint(searchText, function(point) {
+                    if (point) {
+                        map.centerAndZoom(point, 15);
+                        var marker = new BMap.Marker(point);
+                        map.addOverlay(marker);
+                        
+                        // 以搜索位置为中心搜索宠物医院
+                        searchNearby(point);
+                    } else {
+                        alert("您查询的地址没有找到，请确认地址是否正确");
+                    }
+                }, "中国");
+            });
+            
+            // 搜索附近的宠物医院
+            function searchNearby(point) {
+                var hospitalList = document.getElementById("hospitalList");
+                hospitalList.innerHTML = "<p>正在搜索附近的宠物医院...</p>";
+                
+                // 创建本地搜索实例
+                var local = new BMap.LocalSearch(map, {
+                    onSearchComplete: function(results) {
+                        if (results && results.getPoi(0)) {
+                            // 清空原有内容
+                            hospitalList.innerHTML = "";
+                            
+                            // 创建HTML内容
+                            var html = '<h3>附近的宠物医院</h3>';
+                            
+                            // 循环创建医院列表
+                            for (var i = 0; i < results.getCurrentNumPois(); i++) {
+                                var poi = results.getPoi(i);
+                                var id = i + 1; // 模拟ID
+                                
+                                html += '<div class="hospital-item" onclick="showHospitalDetail(\'' + id + '\')">';
+                                html += '<h4>' + poi.title + '</h4>';
+                                html += '<p><strong>地址:</strong> ' + poi.address + '</p>';
+                                if (poi.phoneNumber) {
+                                    html += '<p><strong>电话:</strong> ' + poi.phoneNumber + '</p>';
+                                }
+                                html += '<a href="' + "{{ url_for('pet_hospital.detail', hospital_id='') }}" + id + '" class="detail-link">查看详情</a>';
+                                html += '</div>';
+                                
+                                // 添加标记
+                                var marker = new BMap.Marker(poi.point);
+                                map.addOverlay(marker);
+                                
+                                // 添加信息窗口
+                                (function(poi, marker) {
+                                    var infoWindow = new BMap.InfoWindow(
+                                        '<div style="padding:10px;">' +
+                                        '<h4 style="margin:0 0 5px;">' + poi.title + '</h4>' +
+                                        '<p style="margin:0;"><strong>地址:</strong> ' + poi.address + '</p>' +
+                                        (poi.phoneNumber ? '<p style="margin:0;"><strong>电话:</strong> ' + poi.phoneNumber + '</p>' : '') +
+                                        '<a href="' + "{{ url_for('pet_hospital.detail', hospital_id='') }}" + id + '" style="display:block;margin-top:8px;color:#007bff;">查看详情</a>' +
+                                        '</div>'
+                                    );
+                                    
+                                    marker.addEventListener('click', function() {
+                                        this.openInfoWindow(infoWindow);
+                                    });
+                                })(poi, marker);
+                            }
+                            
+                            hospitalList.innerHTML = html;
+                        } else {
+                            hospitalList.innerHTML = "<p>未找到附近的宠物医院，请尝试其他位置。</p>";
+                        }
+                    },
+                    renderOptions: {
+                        map: map
+                    },
+                    pageCapacity: 10
+                });
+                
+                // 搜索宠物医院
+                local.searchNearby("宠物医院", point, 5000); // 搜索5公里范围内的宠物医院
+            }
+            
+            // 跳转到医院详情页
+            function showHospitalDetail(id) {
+                window.location.href = "{{ url_for('pet_hospital.detail', hospital_id='') }}" + id;
+            }
+        }
+    </script>
+</body>
+</html> 

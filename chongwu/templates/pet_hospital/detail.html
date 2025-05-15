@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ hospital.name }} - 宠物医院详情</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .hospital-detail {
+            padding: 20px;
+        }
+        .hospital-info {
+            display: flex;
+            margin-bottom: 30px;
+        }
+        .hospital-image {
+            flex: 0 0 40%;
+            margin-right: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .hospital-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .hospital-data {
+            flex: 1;
+        }
+        .rating {
+            color: #f57c00;
+            font-size: 1.2rem;
+            margin: 10px 0;
+        }
+        .hospital-contact {
+            margin-top: 15px;
+        }
+        .contact-item {
+            margin-bottom: 8px;
+        }
+        .contact-item i {
+            margin-right: 10px;
+            color: #0056b3;
+        }
+        .hospital-services {
+            margin-top: 30px;
+        }
+        .service-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .service-item {
+            background-color: #e6f2ff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        .review-section {
+            margin-top: 30px;
+        }
+        .review {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .review-author {
+            font-weight: bold;
+        }
+        .review-date {
+            color: #777;
+            font-size: 0.9rem;
+        }
+        .back-button {
+            margin-top: 20px;
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #0056b3;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .back-button:hover {
+            background-color: #003d82;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>宠物信息管理系统</h1>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('pet_info.index') }}">宠物信息</a></li>
+                <li><a href="{{ url_for('pet_knowledge.index') }}">宠物知识</a></li>
+                <li><a href="{{ url_for('pet_hospital.index') }}" class="active">宠物医院</a></li>
+                <li><a href="{{ url_for('index') }}">返回首页</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <main>
+        <section class="hospital-detail">
+            <h2>{{ hospital.name }}</h2>
+            
+            <div class="hospital-info">
+                <div class="hospital-image">
+                    <img src="{{ hospital.image_url|default(url_for('static', filename='img/hospital_default.jpg')) }}" alt="{{ hospital.name }}">
+                </div>
+                
+                <div class="hospital-data">
+                    <div class="rating">
+                        <span>★★★★★</span> {{ hospital.rating|default('5.0') }}/5.0
+                    </div>
+                    
+                    <div class="hospital-contact">
+                        <div class="contact-item">
+                            <i>📍</i> {{ hospital.address|default('地址信息暂无') }}
+                        </div>
+                        <div class="contact-item">
+                            <i>📞</i> {{ hospital.phone|default('联系电话暂无') }}
+                        </div>
+                        <div class="contact-item">
+                            <i>⏰</i> {{ hospital.hours|default('营业时间: 9:00-19:00 (周一至周日)') }}
+                        </div>
+                        <div class="contact-item">
+                            <i>🌐</i> {{ hospital.website|default('官网信息暂无') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="hospital-services">
+                <h3>提供服务</h3>
+                <div class="service-list">
+                    {% for service in hospital.services|default(['常规体检', '疫苗接种', '绝育手术', '皮肤病治疗', '口腔保健', '寄养服务', 'X光检查', '血液检查', '微创手术']) %}
+                        <div class="service-item">{{ service }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="hospital-description">
+                <h3>医院简介</h3>
+                <p>{{ hospital.description|default('这家宠物医院拥有先进的医疗设备和经验丰富的兽医团队，致力于为您的宠物提供最专业的医疗服务。医院环境整洁舒适，服务态度友好。提供常规体检、疫苗接种、手术治疗、急诊服务等多种医疗服务，让您的宠物健康成长。') }}</p>
+            </div>
+            
+            <div class="review-section">
+                <h3>用户评价</h3>
+                
+                {% for review in hospital.reviews|default([
+                    {'author': '张先生', 'date': '2023-10-15', 'content': '医生很专业，环境也很好，给我家猫咪做了绝育手术，恢复得很好。', 'rating': 5},
+                    {'author': '李女士', 'date': '2023-09-28', 'content': '服务态度很好，价格合理，宠物看病很方便。', 'rating': 4}
+                ]) %}
+                <div class="review">
+                    <div class="review-header">
+                        <span class="review-author">{{ review.author }}</span>
+                        <span class="review-date">{{ review.date }}</span>
+                    </div>
+                    <div class="review-rating">
+                        {% for i in range(review.rating) %}★{% endfor %}
+                        {% for i in range(5 - review.rating) %}☆{% endfor %}
+                    </div>
+                    <div class="review-content">
+                        {{ review.content }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <a href="{{ url_for('pet_hospital.index') }}" class="back-button">返回医院列表</a>
+        </section>
+    </main>
+    
+    <footer>
+        <p>&copy; 2023 宠物信息管理系统</p>
+    </footer>
+</body>
+</html> 
