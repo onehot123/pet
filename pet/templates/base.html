@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宠物之家</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5e6d3;
+        }
+        .navbar {
+            background-color: #8b4513;
+            padding: 1rem;
+            color: white;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+        .navbar a:hover {
+            color: #f5e6d3;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .flash-messages {
+            list-style: none;
+            padding: 0;
+        }
+        .flash-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="{{ url_for('home') }}">首页</a>
+            <a href="#">宠物资料库</a>
+            <a href="#">领养平台</a>
+            <a href="#">宠物友好商店</a>
+            <a href="#">宠物医院</a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('logout') }}" style="float: right;">退出</a>
+                <span style="float: right; margin-right: 20px;">欢迎, {{ current_user.username }}!</span>
+            {% else %}
+                <a href="{{ url_for('login') }}" style="float: right;">登录</a>
+                <a href="{{ url_for('register') }}" style="float: right; margin-right: 20px;">注册</a>
+            {% endif %}
+        </div>
+    </nav>
+    
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul class="flash-messages">
+                    {% for message in messages %}
+                        <li class="flash-message">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html> 

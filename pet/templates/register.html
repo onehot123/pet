@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 40px auto; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <h2 style="text-align: center; color: #8b4513; margin-bottom: 20px;">注册</h2>
+    <form method="POST" action="{{ url_for('register') }}">
+        <div style="margin-bottom: 15px;">
+            <label for="username" style="display: block; margin-bottom: 5px; color: #5a3921;">用户名</label>
+            <input type="text" id="username" name="username" required 
+                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label for="email" style="display: block; margin-bottom: 5px; color: #5a3921;">邮箱</label>
+            <input type="email" id="email" name="email" required 
+                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label for="password" style="display: block; margin-bottom: 5px; color: #5a3921;">密码</label>
+            <input type="password" id="password" name="password" required minlength="8"
+                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+        </div>
+        <button type="submit" 
+                style="width: 100%; padding: 10px; background-color: #8b4513; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            注册
+        </button>
+    </form>
+    <p style="text-align: center; margin-top: 15px;">
+        已有账号？ <a href="{{ url_for('login') }}" style="color: #8b4513; text-decoration: none;">立即登录</a>
+    </p>
+</div>
+{% endblock %} 
